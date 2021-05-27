@@ -270,32 +270,55 @@ There are alternative measures we could use, so we will explore some of the comm
 As we progress, we will be adding information about about each node's influence. Use and extend the following code to add this information to each node:
 
 ```{r, eval = FALSE}
+
 tg <-
-    tg %>%
+    network_obj %>%
     activate(nodes) %>%
-    mutate(VAR_NAME = FUNCTION())
+    mutate(degree = FUNCTION())
 ```
 
 
 1. Define what a node's degree is.
 
-**Write your answer here**
+    A node's degree is the measure for centrality of nodes in the network, which can be measured many ways. For example the amount of nodes in the network, or measuring the shortes paths between nodes, et cetera.
+    Centrality answers the question: "Which are the most imporant or central vertices in a network?"
 
 2. Compute each node's degree using the `centrality_degree()` function.
 
 ```{r}
-# Write your answer here
+tg <-
+    network_obj %>%
+    activate(nodes) %>%
+    mutate(degree = centrality_degree()) %>%
+    as_tibble()
+
 ```
 
 
 3. Provide intuitive definitions of betweenness centrality, eigenvector centrality and PageRank centrality.
 
-**Write your answer here**
+    Betweenness centrality = measures the extent to which a vertex (node) lies on paths between other nodes Nodes with high betweenness may have considerable influence within a network by virtue of their control over information passing between others. They are also the ones whose removal from the network will most disrupt communications between other nodes because they lie on the largest number of paths taken by messages.
+    So-called intermediaries can be identified using this measure.
+    
+    Eigenvector centrality = A natural extension of degree centrality is eigenvector centrality. In-degree centrality awards one centrality point for every link a node receives. But not all nodes are equivalent: some are more relevant than others, and, reasonably, endorsements from important nodes count more. The eigenvector centrality thesis reads: 
+    A node is important if it is linked to by other important nodes.
+    Eigenvector centrality differs from in-degree centrality: a node receiving many links does not necessarily have a high eigenvector centrality (it might be that all linkers have low or null eigenvector centrality). Moreover, a node with high eigenvector centrality is not necessarily highly linked (the node might have few but important linkers).
+    
+    PageRank centrality = There are three distinct factors that determine the PageRank of a node: (i) the number of links it receives, (ii) the link propensity of the linkers, and (iii) the centrality of the linkers. 
+    The first factor is not surprising: the more links a node attracts, the more important it is perceived. Reasonably, the value of the endorsement depreciates proportionally to the number of links given out by the endorsing node: links coming from parsimonious nodes are worthier than those emanated by spendthrift ones. Finally, not all nodes are created equal: links from important vertices are more valuable than those from obscure ones.
+    A node is important if it linked from other important and link parsimonious nodes or if it is highly linked.
 
 4. Compute each of the measures in (3), using the functions `centrality_betweenness()`, `centrality_eigen()` and `centrality_pagerank()`.
 
 ```{r}
-# Write your answer here
+tg <-
+    network_obj %>%
+    activate(nodes) %>%
+    mutate(degree = centrality_degree(),
+           betweenness = centrality_betweenness(),
+           eigen = centrality_eigen(),
+           pagerank = centrality_pagerank())
+
 ```
 
 
@@ -315,7 +338,16 @@ Let's explore the measure of influence in our data.
 5. Restrict your sample to users that have a degree centrality score score of less than 100. Plot the distribution of degree centrality as a histogram. Describe the pattern you see.
 
 ```{r}
-# Write your answer here
+
+centrality_measures <- centrality_measures %>%
+    filter(degree < 100)
+
+
+centrality_measures %>%
+    ggplot(aes(x = degree)) +
+    geom_histogram() +
+    theme_bw()
+
 ```
 
 
@@ -334,22 +366,41 @@ top_20 <-
 ```
 
 ```{r}
-# Write your answer here
+top_20 <- 
+    centrality_measures %>%
+    arrange(desc(pagerank)) %>%
+    head(20) %>%
+    mutate(page_rank_rank = dense_rank(pagerank), 
+           between_rank = dense_rank(betweenness),
+           eigen_rank = dense_rank(eigen),
+           degree_rank = dense_rank(degree)
+    )
 ```
 
 
 7. Do the rankings yield similar results across alternative measures of centrality? Can you show this in a graph? 
 
 ```{r}
-# Write your answer here
+
+centrality_table <- top_20 %>%
+    select(name, page_rank_rank, between_rank, eigen_rank, degree_rank)
+
+print(centrality_table)
+
 ```
+
+    The rankings of pagerank and betweenness centrality are relatively alike, although not equal. Degree centrality and eigenvalue centrality are also somewhat alike but still far from equal.
 
 
 8. As a marketer, what is the value of computing these measures of centrality and ranking users?
 Could you use these results to kick start some form of a marketing campaign? 
 Describe why you came to your conclusion.
 
-**Write your answer here**
+    As a marketer, the value of computing these measures of centrality and ranking users creates clarity of influential and influencable nodes/individuals in a network. Very influential individuals, for example based on PageRank centrality or betweenness centrality (depending on what the marketer deems the most useful measure in their case), might be the influencers they want to cooperate with for advertisement.
+    Having very influential influencers might leed to a lot of attention to a certain marketing campaign and therefore, the campaign might very well be boosted/kick started via these influential individuals identified.
+    
+    However, according to Gelper, van der Lans and van Bruggen (forthcoming), having a high amount of nodes linked to (having a lot of friends) is always better. They argue that when influential people have too many friends, the information will be lost very soon if their friends start sharing the information. Very soon, the sharing of the ad (or other information) may stop. When the influential individual has several friends, the information will be more easily passed on.
+    Therefore, it is important to think about whom to cooperate with if it comes to effective use of influencers in marketing campaigns.
 
 ## Exercise 4: Grouping Algorithms
 
