@@ -207,14 +207,18 @@ We encourage you to look for these definitions yourself, and a useful starting p
 1. How many nodes are in the network? Use the function `gorder()` to find the answer.
 
 ```{r}
-# Write your answer here
+
+gorder(network_obj)
+
 ```
 
 
 2. How many edges are there in the network? Use the function `gsize()` to find the answer.
 
 ```{r}
-# Write your answer here
+
+gsize(network_obj)
+
 ```
 
 
@@ -223,20 +227,40 @@ What fraction of these potential edges do we see in the network?
 Based on your answers, do you think the network is sparsely connected?
 
 ```{r}
-# Write your answer here
+
+# How many possible connections are there in the data?
+max_connections <- 0.5 * (gorder(network_obj)) * (gorder(network_obj)-1)
+print(max_connections)
+
+
+# What fraction of these potential edges do we see in the network?
+gsize(network_obj)/max_connections
+
+edge_density(network_obj)
+
+#' The network is sparsely connected; about only 0.1 of 1% of all connections.
+# Therefore, people are generally not connected
+
 ```
 
 
 4. Define the term 'clustering coefficient' (also called transitivity). What is the clustering coefficient in the data? Use the functions `transitivity()` to find the answer and interpret the result. 
 
+    Transitivity or clustering coefficient calculates the probability that adjacent nodes are connected. In other words, it refers to the extent to which a relation that links two connected nodes in a network, by an edge, is transitive.
+    In specific, the clustering or transitivity coefficient is the frequency of loops of length three in the network.
+
 ```{r}
-# Write your answer here
+
+# probability that adjacent nodes are connected
+transitivity(network_obj, type = "undirected")
+
 ```
 
+    The transitivity in this network is approximately 0.17 which means there are several small groups that are connected even though the entire network sample is not very much connected with each other.
 
 5. Why might a marketing analyst care about the summary statistics you documented above?
 
-**Write your answer here**
+    A marketing analyst might care since it tells a lot about the influentiality of the people in the network. Barely anyone has either many followers and/or follows many others and therefore, not many will be influenced or influential when pursuing marketing practices within this network. There are a lot of small groups of connected people, but yet the network is sparsely connected. A follow-up analysis might indentify influential and highly influencable people/nodes in the network, which might be interesting to work with for advertising or other marketing practices.
 
 ## Exercise 3: Finding Influential Users
 
