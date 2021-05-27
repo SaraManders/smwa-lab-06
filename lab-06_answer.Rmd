@@ -83,7 +83,9 @@ Much of the content will be a revision of Lab 01.
 1. Load the data into R.
 
 ```{r}
-# Write your answer here
+
+tweets <- read_rds("data/rstats_tweets.rds")
+
 ```
 
 
@@ -91,7 +93,12 @@ Much of the content will be a revision of Lab 01.
 Drop all tweets that do not include a mention, and keep only columns that include the author of the tweet and the name(s) of the users that are mentioned.
 
 ```{r}
-# Write your answer here
+
+connections <- tweets %>%
+    filter(mentions_screen_name != "NA") %>% #to only keep mentions tweets
+    select(screen_name, mentions_screen_name)
+
+
 ```
 
 
@@ -100,7 +107,11 @@ In particular if multiple users are mentioned in a tweet, there should be one ro
 Also, drop any occurrences where a user mentions themselves.
 
 ```{r}
-# Write your answer here
+
+connections <- connections %>%
+    unnest_longer(mentions_screen_name) %>% #to make sure the column to is not listed anymore, but all are separate values/strings
+    filter(screen_name != mentions_screen_name)
+
 ```
 
 
@@ -145,14 +156,44 @@ edgelist <-
 ```
 
 ```{r}
-# Write your answer here
+# (a)
+set.seed(1234567890)
+
+# (b)
+View(connections)
+
+tweet_authors <- as_tibble(
+    unique(connections$screen_name))
+
+seed_users <- sample_n(tweet_authors, 250)
+
+# (c)
+seed_connections <-
+    connections %>% 
+    filter(screen_name %in% seed_users$value)
+
+first_step <- unique(seed_connections$mentions_screen_name)
+
+# (d)
+all_users <- unique(c(seed_users$value, first_step))
+
+edgelist <- 
+    connections %>%
+    filter(screen_name %in% all_users,
+           mentions_screen_name %in% all_users) %>%
+    distinct()
+
 ```
 
 
 5. Convert the edge-list you created in (4) to an undirected network object.
 
 ```{r}
-# Write your answer here
+
+network_obj <- as_tbl_graph(edgelist) %>%
+    convert(to_undirected) %>%
+    convert(to_simple)
+
 ```
 
 
