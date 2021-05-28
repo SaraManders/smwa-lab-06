@@ -400,7 +400,7 @@ Describe why you came to your conclusion.
     Having very influential influencers might leed to a lot of attention to a certain marketing campaign and therefore, the campaign might very well be boosted/kick started via these influential individuals identified.
     
     However, according to Gelper, van der Lans and van Bruggen (forthcoming), having a high amount of nodes linked to (having a lot of friends) is always better. They argue that when influential people have too many friends, the information will be lost very soon if their friends start sharing the information. Very soon, the sharing of the ad (or other information) may stop. When the influential individual has several friends, the information will be more easily passed on.
-    Therefore, it is important to think about whom to cooperate with if it comes to effective use of influencers in marketing campaigns.
+    Therefore, it is important to think about whom to cooperate with if it comes to effective use of influencers in marketing campaigns. Further analysis would be required.
 
 ## Exercise 4: Grouping Algorithms
 
@@ -410,35 +410,58 @@ We can then visualize the communities among the larger network, and look for inf
 
 1. The first community detection algorithm we will look at is `infomap`. Do some research online in order to provide an intuitive explanation of how the infomap algorithm works.
 
-**Write your answer here**
+    The infomap algorithm is used to detect communities in networks. The infomap algorithm tries to minimize a cost function of which the partitioning is based on the flow induced by the pattern of connections in a given network.
 
 2. Implement the infomap community detection algorithm by running the following code:
 
 ```{r}
-# tg <- 
-#     tg %>%
-#     activate(nodes) %>%
-#     mutate(grp_info = group_infomap()) 
+tg <- 
+     tg %>%
+     activate(nodes) %>%
+     mutate(grp_info = group_infomap()) 
 ```
 
 
 3. How many communities did the algorithm detect?
 
 ```{r}
-# Write your answer here
+
+tg %>%
+    activate(nodes) %>%
+    as_tibble() %>%
+    summarise(max_grp = max(grp_info))
+
 ```
 
 4. How large is each community?
 
 ```{r}
-# Write your answer here
+
+grp_size <- tg %>%
+    activate(nodes) %>%
+    as_tibble() %>%
+    group_by(grp_info) %>%
+    count()
+
+print(grp_size)
+
 ```
 
 5. Visualize the top 5 communities in terms of group size by completing this code:
 
 
 ```{r}
-# Write your answer here
+
+tg_plot <- tg %>%
+    activate(nodes) %>%
+    filter(grp_info %in% c(1,2,3,4,5)) #only plot it if you're part of the biggest five groups
+
+tg_plot %>%
+    ggraph(layout = "fr") +
+    geom_node_point(aes(color = as.factor(grp_info))) +
+    geom_edge_link(alpha = 0.2) +
+    theme_void()
+
 ```
 
 
@@ -446,35 +469,89 @@ Let's try a different community detection algorithm, called the Louvain method.
 
 6. Do some research online in order to provide an intuitive explanation of how the Louvain algorithm works.
 
-**Write your answer here**
+    The inspiration for the Louvain algorithm of community detection is the optimization of modularity as the algorithm progresses. Modularity is a scale value between −0.5 (non-modular clustering) and 1 (fully modular clustering) that measures the relative density of edges inside communities with respect to edges outside communities. Optimizing this value theoretically results in the best possible grouping of the nodes of a given network, however going through all possible iterations of the nodes into groups is impractical so heuristic algorithms are used.
 
 7. Adapt your code from (2) to identify communities using the Louvain Method.
 The function you will want to use is `group_louvain()`
 
 ```{r}
-# Write your answer here
+tg <- 
+     tg %>%
+     activate(nodes) %>%
+     mutate(grp_info = group_louvain())
 ```
 
 
 8. How many communities did the algorithm detect? What are the community sizes of each algorithm?
 
 ```{r}
-# Write your answer here
+tg %>%
+    activate(nodes) %>%
+    as_tibble() %>%
+    group_by(grp_info) %>%
+    count()
+
+```
+
+```{r}
+tg %>%
+    activate(nodes) %>%
+    as_tibble() %>%
+    summarise(max_grp = max(grp_info))
+
 ```
 
 9. Visualize the top 5 communities identified in (7) by adapting the code you constructed in (5). 
 
 ```{r}
-# Write your answer here
+tg_plot2 <- tg %>%
+    activate(nodes) %>%
+    filter(grp_info %in% c(1,2,3,4,5)) #only plot it if you're part of the biggest five groups
+
+tg_plot2 %>%
+    ggraph(layout = "fr") +
+    geom_node_point(aes(color = as.factor(grp_info))) +
+    geom_edge_link(alpha = 0.2) +
+    theme_void()
+
 ```
 
 
 10. For each of the top 5 groups we identified using the Louvain model, find the 5 most influential users as measured by PageRank.
 
 ```{r}
-# Write your answer here
+
+# Starting point
+tg_plot2 <- tg %>%
+    activate(nodes) %>%
+    filter(grp_info %in% c(1,2,3,4,5))
+
+tg2 <- tg_plot2 %>%
+    activate(nodes) %>%
+    mutate(degree_rank = dense_rank(degree),
+           betweenness_rank = dense_rank(betweenness),
+           eigen_rank = dense_rank(eigen),
+           pagerank_rank = dense_rank(pagerank)) %>%
+    as_tibble() %>%
+    rownames_to_column() %>%
+    rename(id = rowname)
+
+final <- tg2 %>%
+    select(-(.tidygraph_node_index:pagerank), -name) %>%
+    mutate(id = as.numeric(id),
+           average_rank = ((degree_rank + betweenness_rank + eigen_rank + pagerank_rank)/4)) %>%
+    group_by(average_rank)
+
+final[order(-final$average_rank),] %>%
+    head()
+
+
 ```
 
 11. Explain how identifying communities and influential users within them can be useful in the design of a marketing campaign aimed at using influencers.
 
-**Write your answer here**
+As a marketer, the value of computing these measures of centrality and ranking users creates clarity of influential and influencable nodes/individuals in a network. Very influential individuals, for example based on PageRank centrality or betweenness centrality (depending on what the marketer deems the most useful measure in their case), might be the influencers they want to cooperate with for advertisement.
+    Having very influential influencers might leed to a lot of attention to a certain marketing campaign and therefore, the campaign might very well be boosted/kick started via these influential individuals identified.
+    
+    However, according to Gelper, van der Lans and van Bruggen (forthcoming), having a high amount of nodes linked to (having a lot of friends) is always better. They argue that when influential people have too many friends, the information will be lost very soon if their friends start sharing the information. Very soon, the sharing of the ad (or other information) may stop. When the influential individual has several friends, the information will be more easily passed on.
+    Therefore, it is important to think about whom to cooperate with if it comes to effective use of influencers in marketing campaigns. Further analysis would be required.
